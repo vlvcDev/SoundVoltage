@@ -13,7 +13,7 @@ voltage = df['Voltage'].to_numpy()
 min_voltage = np.min(voltage)
 max_voltage = np.max(voltage)
 normalized_voltage = (voltage - min_voltage) / (max_voltage - min_voltage)
-frequency = 200 + normalized_voltage * (20)  # Mapping to frequency
+frequency = 300 + normalized_voltage * (20)  # Mapping to frequency
 
 # Generate the audio signal
 sample_rate = 8000  # Sampling rate in Hz
