@@ -10,7 +10,13 @@ if stretch_scalar == None:
 else:
     stretch_scalar = int(stretch_scalar)
 
-df = pd.read_csv('ConvertedSheets/mix csv.csv', skiprows=1)
+pitch_scalar = input("Enter the amount of pitch increase, skip for none: ")
+if pitch_scalar == None:
+    pitch_scalar = 1
+else:
+    pitch_scalar = float(pitch_scalar)
+
+df = pd.read_csv('ConvertedSheets/sawtooth csv.csv', skiprows=1)
 time = df.iloc[:, 0].to_numpy()  # First column
 # Convert scientific notation to standard notation
 time = np.array([float(i) for i in time])
@@ -26,14 +32,15 @@ max_voltage = np.max(voltage)
 normalized_voltage = (voltage - min_voltage) / (max_voltage - min_voltage)
 frequency = 300 + normalized_voltage * (20)  # Mapping to frequency
 
+frequency = frequency * pitch_scalar
+
 # Generate the audio signal
-sample_rate = 4000  # Sampling rate in Hz
+sample_rate = 8000  # Sampling rate in Hz
 t = np.linspace(0, len(time) / sample_rate, len(time), endpoint=False)  # Time array
 audio_signal = np.sin(2 * np.pi * frequency * t)  # Generating the sine wave
 
 # Convert to 16-bit PCM format for sounddevice
 audio_signal = (audio_signal * 32767).astype(np.int16)
-
 sd.play(audio_signal, sample_rate)
 
 # Visualize the voltage over time
@@ -45,7 +52,7 @@ plt.ylabel('Voltage')
 plt.grid(True)
 plt.show()
 
-wavfile.write('audio.wav', sample_rate, audio_signal)  # Write the audio signal to a WAV file
+wavfile.write('sawtooth.wav', sample_rate, audio_signal)  # Write the audio signal to a WAV file
 
 sd.wait()  # Wait until the sound has finished playing
 
