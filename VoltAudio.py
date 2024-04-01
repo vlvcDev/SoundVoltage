@@ -4,11 +4,21 @@ import sounddevice as sd
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
 
+stretch_scalar = input("Enter the amount of horizontal stretch, skip for none: ")
+if stretch_scalar == None:
+    stretch_scalar = 1
+else:
+    stretch_scalar = int(stretch_scalar)
+
 df = pd.read_csv('ConvertedSheets/mix csv.csv', skiprows=1)
 time = df.iloc[:, 0].to_numpy()  # First column
 # Convert scientific notation to standard notation
 time = np.array([float(i) for i in time])
 voltage = df.iloc[:, 1].to_numpy()  # Second column
+
+# Stretch the time and voltage arrays
+time = np.repeat(time, stretch_scalar)
+voltage = np.repeat(voltage, stretch_scalar)
 
 # Normalize the voltage data to map to a frequency range
 min_voltage = np.min(voltage)
