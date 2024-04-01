@@ -6,10 +6,10 @@ xl = pd.ExcelFile('./DataSheets/CapstoneData.xlsx')
 df = xl.parse(xl.sheet_names[0])
 
 # Drop rows with any empty values
-df = df.dropna(axis=0)
+df = df.dropna(axis=0, how='all')
 
-# Select the second and third columns (assuming 0-indexing)
-df1 = df.iloc[:, [1, 2]]
+# Select columns 2 and 3 and drop rows with any empty values
+df1 = df.iloc[:, [1, 2]].dropna()
 
 # Write to csv
 df1.to_csv('Audio1.csv', index=False)
