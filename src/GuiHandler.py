@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import PhotoImage, filedialog
 from csv_parser import clean_selected
 from VoltAudio import createWav, current_sound
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -43,11 +43,14 @@ def button3_clicked():
 
 
 
-# Create the main window
+# Main window configuration
 window = tk.Tk()
 window.configure(bg="gray")
 # window.geometry("200x400")
 window.title("VIOLET")
+icon_path = "icon.png" 
+icon = PhotoImage(file=icon_path)
+window.iconphoto(False, icon)
 
 # Create the buttons
 base_width = 10
