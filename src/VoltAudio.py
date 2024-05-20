@@ -59,3 +59,30 @@ def createWav():
 
 
 
+def current_sound(current_position):
+    df = pd.read_csv('ConvertedSheets/clean_audio.csv', skiprows=1)
+    time = df.iloc[:, 0].to_numpy()  # First column
+    # Convert scientific notation to standard notation
+    time = np.array([float(i) for i in time])
+    voltage = df.iloc[:, 1].to_numpy()  # Second column
+
+    # Get the voltage at the current position
+    voltage_at_position = voltage[current_position]
+
+    # Normalize the voltage to a frequency
+    min_voltage = np.min(voltage)
+    max_voltage = np.max(voltage)
+    normalized_voltage = (voltage_at_position - min_voltage) / (max_voltage - min_voltage)
+    frequency = 300 + normalized_voltage * (20)  # Mapping to frequency
+
+    # Generate a sound wave
+    sample_rate = 44100  # Sample rate in Hz
+    duration = 1.0  # Duration of the sound in seconds
+    t = np.linspace(0, duration, int(sample_rate * duration), False)
+    sound_wave = 0.5 * np.sin(2 * np.pi * frequency * t)
+
+    # Play the sound
+    sd.play(sound_wave, sample_rate)
+
+    # Wait for the sound to finish playing
+    sd.wait()
