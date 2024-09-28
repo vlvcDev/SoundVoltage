@@ -35,7 +35,7 @@ def audio_callback(outdata, frames, time, status):
             outdata[:] = chunk.reshape(-1, 1)
             position += frames
 
-def createWav():
+def create_wav():
     global audio_signal, sample_rate, position, stream  # Declare as global to access in toggle_pause
 
     df = pd.read_csv('ConvertedSheets/clean_audio.csv', skiprows=1)
@@ -52,7 +52,7 @@ def createWav():
 
     # Generate the audio signal
     duration = 0.003  # Duration of the sound in seconds
-    fade_duration = 0.003  # Duration of the fade in and fade out in seconds
+    fade_duration = 0.003  # Duration of the fade in and fade out in seconds, this prevents clicks in the audio
 
     # Preallocate an array for the audio signal
     audio_signal = np.zeros(int(sample_rate * duration * len(frequency)))
@@ -62,7 +62,6 @@ def createWav():
         t = np.linspace(0, duration, int(sample_rate * duration), False)  # Time array
         signal = np.sin(2 * np.pi * freq * t)  # Generating the sine wave
 
-        # Apply a fade in and fade out effect to avoid clicks at the beginning and end of the sound
         fade_in = np.linspace(0, 1, int(sample_rate * fade_duration))
         fade_out = np.linspace(1, 0, int(sample_rate * fade_duration))
         signal[:len(fade_in)] *= fade_in
@@ -73,6 +72,7 @@ def createWav():
     # Convert to 16-bit PCM format for sounddevice
     audio_signal = (audio_signal * 32767).astype(np.int16)
 
+    plt.ion()
     # Visualize the voltage over time
     plt.figure(figsize=(10, 6))
     plt.plot(time, voltage)
@@ -80,8 +80,9 @@ def createWav():
     plt.xlabel('Time')
     plt.ylabel('Voltage')
     plt.grid(True)
-    plt.show()
-
+    plt.show(block=False)  # Show the plot without blocking the code execution
+    plt.pause(duration * len(frequency))  # Pause the code execution for the duration of the audio
+    plt.close()  # Close the plot window
     wavfile.write('clean_audio.wav', sample_rate, audio_signal)  # Write the audio signal to a WAV file
 
     # Set up the keyboard listener
@@ -98,7 +99,6 @@ def current_sound(current_position):
     time = np.array([float(i) for i in time])
     voltage = df.iloc[:, 1].to_numpy()  # Second column
 
-    # Get the voltage at the current position
     voltage_at_position = voltage[current_position]
 
     # Normalize the voltage to a frequency
@@ -113,8 +113,63 @@ def current_sound(current_position):
     t = np.linspace(0, duration, int(sample_rate * duration), False)
     sound_wave = 0.5 * np.sin(2 * np.pi * frequency * t)
 
-    # Play the sound
     sd.play(sound_wave, sample_rate)
 
-    # Wait for the sound to finish playing
     sd.wait()
+
+
+def play_full():
+    global audio_signal, sample_rate, position, stream  # Declare as global to access in toggle_pause
+
+    df = pd.read_csv('ConvertedSheets/clean_audio.csv', skiprows=1)
+    time = df.iloc[:, 0].to_numpy()  # First column
+    # Convert scientific notation to standard notation
+    time = np.array([float(i) for i in time])
+    voltage = df.iloc[:, 1].to_numpy()  # Second column
+
+    # Normalize the voltage data to map to a frequency range
+    min_voltage = np.min(voltage)
+    max_voltage = np.max(voltage)
+    normalized_voltage = (voltage - min_voltage) / (max_voltage - min_voltage)
+    frequency = 200 + normalized_voltage * (1700 - 200)  # Mapping to frequency
+
+    # Generate the audio signal
+    duration = 0.003  # Duration of the sound in seconds
+    fade_duration = 0.003  # Duration of the fade in and fade out in seconds, this prevents clicks in the audio
+
+    # Preallocate an array for the audio signal
+    audio_signal = np.zeros(int(sample_rate * duration * len(frequency)))
+
+    # Generate a time array and audio signal for each frequency
+    for i, freq in enumerate(frequency):
+        t = np.linspace(0, duration, int(sample_rate * duration), False)  # Time array
+        signal = np.sin(2 * np.pi * freq * t)  # Generating the sine wave
+
+        fade_in = np.linspace(0, 1, int(sample_rate * fade_duration))
+        fade_out = np.linspace(1, 0, int(sample_rate * fade_duration))
+        signal[:len(fade_in)] *= fade_in
+        signal[-len(fade_out):] *= fade_out
+
+        audio_signal[i*int(sample_rate * duration):(i+1)*int(sample_rate * duration)] = signal
+
+    # Convert to 16-bit PCM format for sounddevice
+    audio_signal = (audio_signal * 32767).astype(np.int16)
+
+    # Set up the keyboard listener
+    keyboard.on_press_key("space", toggle_pause)
+
+    # Create an OutputStream with the audio callback
+    stream = sd.OutputStream(callback=audio_callback, samplerate=sample_rate, channels=1, dtype='int16')
+    stream.start()
+
+    plt.ion()
+    # Visualize the voltage over time
+    plt.figure(figsize=(10, 6))
+    plt.plot(time, voltage)
+    plt.title('Voltage over Time')
+    plt.xlabel('Time')
+    plt.ylabel('Voltage')
+    plt.grid(True)
+    plt.show(block=False)  # Show the plot without blocking the code execution
+    plt.pause(duration * len(frequency))  # Pause the code execution for the duration of the audio
+    plt.close()  # Close the plot window
